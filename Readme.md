@@ -8,42 +8,32 @@
 - Saves unique emails to a specified output file.
 
 ## Installation
-
-1. **Clone the Repository**:
-
-   ```bash
-   git clone https://github.com/mux0x/gemails.git
-   cd gemails
-   ```
-2. Build and Install:
-
-3. Ensure Go is installed and properly configured, then run:
 ```
     go install github.com/mux0x/gemails@latest
 ```
-    This installs the gemails binary in your Go bin directory.
-
-Usage
+## Usage
 ```
 gemails -u <username> -t <token> -o <output_file>
 ```
-Options
+
+### Options
 
     -u: GitHub username or organization (required).
     -t: GitHub API token (required).
     -o: Output file to save unique emails (optional, defaults to unique_emails.txt).
 
-Example
+### Example
 ```
 gemails -u octocat -t ghp_12345abcde67890fghijk -o emails.txt
 ```
+
 This will:
 
-    Retrieve all repositories for the user octocat.
-    Fetch all commits for each repository.
-    Extract unique committer email addresses.
-    Print unique emails to stdout.
-    Save unique emails to emails.txt.
+-    Retrieve all repositories for the user octocat.
+-    Fetch all commits for each repository.
+-    Extract unique committer email addresses.
+-    Print unique emails to stdout.
+-    Save unique emails to emails.txt.
 
 Generating a GitHub Token
 
