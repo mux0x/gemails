@@ -1,32 +1,32 @@
-GEmails
+**GEmails** is a Go-based CLI tool for retrieving unique committer email addresses from all repositories of a specified GitHub user or organization. The tool uses the GitHub API to fetch repositories and commits and outputs unique email addresses to both stdout and a file.
 
-GEmails is a Go-based CLI tool for retrieving unique committer email addresses from all repositories of a specified GitHub user or organization. The tool uses the GitHub API to fetch repositories and commits and outputs unique email addresses to both stdout and a file.
-Features
+## Features
 
-    Fetches all repositories for a GitHub user or organization.
-    Retrieves all commits for each repository.
-    Extracts and outputs unique committer email addresses.
-    Saves unique emails to a specified output file.
+- Fetches all repositories for a GitHub user or organization.
+- Retrieves all commits for each repository.
+- Extracts and outputs unique committer email addresses.
+- Saves unique emails to a specified output file.
 
-Installation
+## Installation
 
-    Clone the Repository:
+1. **Clone the Repository**:
 
-git clone https://github.com/mux0x/gemails.git
-cd gemails
+   ```bash
+   git clone https://github.com/mux0x/gemails.git
+   cd gemails
+   ```
+2. Build and Install:
 
-Build and Install:
-
-Ensure Go is installed and properly configured, then run:
-
+3. Ensure Go is installed and properly configured, then run:
+```
     go install github.com/mux0x/gemails@latest
-
+```
     This installs the gemails binary in your Go bin directory.
 
 Usage
-
+```
 gemails -u <username> -t <token> -o <output_file>
-
+```
 Options
 
     -u: GitHub username or organization (required).
@@ -34,9 +34,9 @@ Options
     -o: Output file to save unique emails (optional, defaults to unique_emails.txt).
 
 Example
-
+```
 gemails -u octocat -t ghp_12345abcde67890fghijk -o emails.txt
-
+```
 This will:
 
     Retrieve all repositories for the user octocat.
