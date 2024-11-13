@@ -35,7 +35,7 @@ func main() {
 
 	// Validate inputs
 	if *username == "" || *token == "" {
-		log.Fatalf("Usage: ghpemails -u <username> -t <token> -o <output file>")
+		log.Fatalf("Usage: gemails -u <username> -t <token> -o <output file>")
 	}
 
 	// Track unique emails using a map
