@@ -31,18 +31,27 @@ func main() {
 	username := flag.String("u", "", "GitHub username or organization")
 	token := flag.String("t", "", "GitHub API token")
 	outputFile := flag.String("o", "emails.txt", "Output file to save unique emails")
+	repo := flag.String("r", "", "Specific repository to process (leave empty to process all repositories)")
 	flag.Parse()
 
 	// Validate inputs
 	if *username == "" || *token == "" {
-		log.Fatalf("Usage: gemails -u <username> -t <token> -o <output file>")
+		log.Fatalf("Usage: gemails -u <username> -t <token> -o <output file> [-r <repo>]")
 	}
 
 	// Track unique emails using a map
 	uniqueEmails := make(map[string]bool)
 
-	// Fetch repositories
-	repos := fetchRepos(*username, *token)
+	var repos []Repository
+	if *repo != "" {
+		// Process only the specific repository
+		repos = append(repos, Repository{Name: *repo})
+	} else {
+		// Fetch all repositories
+		repos = fetchRepos(*username, *token)
+	}
+
+	// Process each repository
 	for _, repo := range repos {
 		fmt.Printf("Processing repository: %s\n", repo.Name)
 		// Fetch commits for each repository
@@ -100,7 +109,11 @@ func sendRequest(url, token string) []byte {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	// Handle different HTTP status codes, especially 409 Conflict
+	if resp.StatusCode == http.StatusConflict { // 409 Conflict
+		log.Printf("Warning: 409 Conflict encountered for URL: %s. Skipping.", url)
+		return nil // Skip this request and return an empty response
+	} else if resp.StatusCode != http.StatusOK {
 		log.Fatalf("GitHub API returned status code %d for URL %s", resp.StatusCode, url)
 	}
 
