@@ -8,6 +8,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
+	"time"
+
+	"github.com/likexian/whois"
+	"github.com/fatih/color"
 )
 
 const githubAPI = "https://api.github.com"
@@ -41,6 +47,7 @@ func main() {
 
 	// Track unique emails using a map
 	uniqueEmails := make(map[string]bool)
+	uniqueDomains := make(map[string]bool)
 
 	var repos []Repository
 	if *repo != "" {
@@ -60,7 +67,11 @@ func main() {
 			email := commit.CommitData.Committer.Email
 			if email != "" && !uniqueEmails[email] {
 				uniqueEmails[email] = true
-				fmt.Printf("Unique Committer Email: %s\n", email)
+				// Extract domain and add it to uniqueDomains map
+				domain := extractDomainFromEmail(email)
+				if domain != "" {
+					uniqueDomains[domain] = true
+				}
 			}
 		}
 	}
@@ -68,6 +79,9 @@ func main() {
 	// Save unique emails to the specified output file
 	saveUniqueEmails(uniqueEmails, *outputFile)
 	fmt.Printf("\nUnique emails saved to %s\n", *outputFile)
+
+	// Now, check the domain expiry for each unique domain
+	checkDomainsExpiry(uniqueDomains)
 }
 
 // fetchRepos fetches all repositories for a user or organization
@@ -137,4 +151,59 @@ func saveUniqueEmails(emails map[string]bool, outputFile string) {
 			log.Fatalf("Error writing to output file: %v", err)
 		}
 	}
+}
+
+// checkDomainsExpiry checks WHOIS info for each domain and compares expiry date
+func checkDomainsExpiry(domains map[string]bool) {
+	for domain := range domains {
+		// Perform WHOIS lookup
+		whoisInfo, err := whois.Whois(domain)
+		if err != nil {
+			log.Printf("Error fetching WHOIS info for domain %s: %v", domain, err)
+			continue
+		}
+
+		// Try to find the expiry date in the WHOIS info (simplified)
+		expiryDate := extractExpiryDateFromWhois(whoisInfo)
+		if expiryDate.IsZero() {
+			log.Printf("No expiry date found for domain %s", domain)
+			continue
+		}
+
+		// Compare the expiry date with today's date
+		daysUntilExpiry := time.Until(expiryDate).Hours() / 24
+		if daysUntilExpiry < 30 {
+			color.Red("Domain %s is nearing expiry (Expires on %s, %d days left)", domain, expiryDate.Format("2006-01-02"), int(daysUntilExpiry))
+		} else {
+			color.Green("Domain %s has a valid expiry date (Expires on %s, %d days left)", domain, expiryDate.Format("2006-01-02"), int(daysUntilExpiry))
+		}
+	}
+}
+
+// extractDomainFromEmail extracts the domain from an email address
+func extractDomainFromEmail(email string) string {
+	parts := strings.Split(email, "@")
+	if len(parts) > 1 {
+		return parts[1]
+	}
+	return ""
+}
+
+// extractExpiryDateFromWhois extracts the expiry date from the WHOIS information
+func extractExpiryDateFromWhois(whoisInfo string) time.Time {
+	// Simple regex pattern to match expiry date (in ISO 8601 format or similar)
+	expiryRegex := regexp.MustCompile(`(?i)(?:(expiration|expire|expiry)[^\w]*(date|time)[^\w]*[:\s]+)(\d{4}-\d{2}-\d{2})`)
+	matches := expiryRegex.FindStringSubmatch(whoisInfo)
+
+	if len(matches) > 3 {
+		expiryDateStr := matches[3]
+		expiryDate, err := time.Parse("2006-01-02", expiryDateStr)
+		if err != nil {
+			log.Printf("Error parsing expiry date: %v", err)
+			return time.Time{}
+		}
+		return expiryDate
+	}
+
+	return time.Time{} // return zero value if no expiry date is found
 }
